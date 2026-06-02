@@ -8,13 +8,21 @@ from django.contrib.auth.hashers import make_password, check_password
 from .serializers import RegisterSerializer, LoginSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, OTP, BankAccount, Transaction
-from .utils import send_otp_email, send_forgot_password_otp_email, send_deactivation_otp_email, send_reactivation_otp_email, send_change_password_otp_email, send_pin_config_otp_email
+from .utils import (
+    send_otp_email,
+    send_forgot_password_otp_email,
+    send_deactivation_otp_email,
+    send_reactivation_otp_email,
+    send_change_password_otp_email,
+    send_pin_config_otp_email,
+)
 
 
 class SendOTPView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        print("Send OTP API HIT")
         email = request.data.get("email")
         name = request.data.get("name")
 
@@ -156,13 +164,13 @@ class RegisterView(APIView):
             ref_id = f"TXN-{random.randint(1000, 9999)}"
             while Transaction.objects.filter(reference_id=ref_id).exists():
                 ref_id = f"TXN-{random.randint(1000, 9999)}"
-            
+
             Transaction.objects.create(
                 sender=None,
                 receiver=user,
                 amount=500.00,
                 remarks="Vault Compliance Credit",
-                reference_id=ref_id
+                reference_id=ref_id,
             )
 
             return Response(
@@ -285,22 +293,27 @@ class DashboardView(APIView):
             )
         elif bank_account.account_number.startswith("9821"):
             # Automatically migrate legacy old-format accounts to the new premium SBK format!
-            current_year = bank_account.created_at.year if bank_account.created_at else timezone.now().year
+            current_year = (
+                bank_account.created_at.year
+                if bank_account.created_at
+                else timezone.now().year
+            )
             acct_num = f"SBK{current_year}{random.randint(1, 9999999):07d}"
             while BankAccount.objects.filter(account_number=acct_num).exists():
                 acct_num = f"SBK{current_year}{random.randint(1, 9999999):07d}"
-            
+
             bank_account.account_number = acct_num
             bank_account.save()
 
         # Ensure card details exist in the BankAccount model
         if not bank_account.card_number:
             import hashlib
+
             user_hash = hashlib.sha256(user.username.encode()).hexdigest()
             # Derive 12 digits deterministically from username hash
             numeric_suffix = str(int(user_hash[:15], 16))[:12]
             if len(numeric_suffix) < 12:
-                numeric_suffix = numeric_suffix.ljust(12, '5')
+                numeric_suffix = numeric_suffix.ljust(12, "5")
             # Format as a standard 16-digit card number: 9821 XXXX XXXX XXXX
             card_num = f"9821 {numeric_suffix[:4]} {numeric_suffix[4:8]} {numeric_suffix[8:12]}"
             bank_account.card_number = card_num
@@ -311,23 +324,36 @@ class DashboardView(APIView):
         # Format masked card number for dashboard
         raw_card = bank_account.card_number
         parts = raw_card.split()
-        masked_card = f"{parts[0]} **** **** {parts[3]}" if len(parts) == 4 else "9821 **** **** 0000"
+        masked_card = (
+            f"{parts[0]} **** **** {parts[3]}"
+            if len(parts) == 4
+            else "9821 **** **** 0000"
+        )
 
         # Format relative created date or default
-        created_str = bank_account.card_created_at.strftime("%d %b %Y") if bank_account.card_created_at else "01 Jun 2026"
+        created_str = (
+            bank_account.card_created_at.strftime("%d %b %Y")
+            if bank_account.card_created_at
+            else "01 Jun 2026"
+        )
 
         # Find the last outgoing transaction by user
-        last_txn = Transaction.objects.filter(sender=user).order_by('-created_at').first()
-        last_used_str = last_txn.created_at.strftime("%d %b %Y") if last_txn else "Never"
+        last_txn = (
+            Transaction.objects.filter(sender=user).order_by("-created_at").first()
+        )
+        last_used_str = (
+            last_txn.created_at.strftime("%d %b %Y") if last_txn else "Never"
+        )
 
         # Determine host machine's local network IP for external scannability (Google Lens, iPhone Camera, etc.)
         import socket
+
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            s.connect(('10.255.255.255', 1))
+            s.connect(("10.255.255.255", 1))
             local_ip = s.getsockname()[0]
         except Exception:
-            local_ip = '127.0.0.1'
+            local_ip = "127.0.0.1"
         finally:
             s.close()
 
@@ -348,6 +374,7 @@ class DashboardView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
 
 class ForgotPasswordSendOTPView(APIView):
     permission_classes = [AllowAny]
@@ -485,6 +512,7 @@ class ForgotPasswordResetView(APIView):
             )
 
         import re
+
         if (
             not re.search(r"[A-Z]", password)
             or not re.search(r"[a-z]", password)
@@ -502,7 +530,10 @@ class ForgotPasswordResetView(APIView):
         user = User.objects.filter(email=email.lower()).first()
         if not user:
             return Response(
-                {"success": False, "message": "Associated wealth account was not found."},
+                {
+                    "success": False,
+                    "message": "Associated wealth account was not found.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -727,7 +758,10 @@ class ReactivateConfirmView(APIView):
         user = User.objects.filter(email=email.lower()).first()
         if not user:
             return Response(
-                {"success": False, "message": "Associated wealth account was not found."},
+                {
+                    "success": False,
+                    "message": "Associated wealth account was not found.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1099,6 +1133,7 @@ class VerifyPINView(APIView):
 
     def post(self, request, *args, **kwargs):
         from django.utils import timezone
+
         user = request.user
         pin = request.data.get("pin")
 
@@ -1122,7 +1157,9 @@ class VerifyPINView(APIView):
 
         # 1. Check if the user is currently locked out
         if user.pin_locked_until and user.pin_locked_until > timezone.now():
-            remaining_seconds = int((user.pin_locked_until - timezone.now()).total_seconds())
+            remaining_seconds = int(
+                (user.pin_locked_until - timezone.now()).total_seconds()
+            )
             remaining_minutes = (remaining_seconds // 60) + 1
             return Response(
                 {
@@ -1180,12 +1217,15 @@ class VerifyRecipientView(APIView):
         recipient = request.data.get("recipient")
         if not recipient:
             return Response(
-                {"success": False, "message": "Recipient email or account number is required."},
+                {
+                    "success": False,
+                    "message": "Recipient email or account number is required.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         recipient = recipient.strip()
-        
+
         user_match = None
         account_match = None
 
@@ -1206,26 +1246,38 @@ class VerifyRecipientView(APIView):
             # 3. Search by Account Number (fallback)
             if not account_match:
                 cleaned_acct = recipient.replace("-", "").replace(" ", "").upper()
-                account_match = BankAccount.objects.filter(account_number__iexact=cleaned_acct).first()
+                account_match = BankAccount.objects.filter(
+                    account_number__iexact=cleaned_acct
+                ).first()
                 if account_match:
                     user_match = account_match.user
 
         if not account_match or not user_match:
             return Response(
-                {"success": False, "message": "Recipient not found in the Secure Bank database."},
+                {
+                    "success": False,
+                    "message": "Recipient not found in the Secure Bank database.",
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         if user_match == request.user:
             return Response(
-                {"success": False, "message": "Self-transfers are not permitted. Please specify another recipient."},
+                {
+                    "success": False,
+                    "message": "Self-transfers are not permitted. Please specify another recipient.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         return Response(
             {
                 "success": True,
-                "name": user_match.first_name if user_match.first_name else f"{user_match.username}",
+                "name": (
+                    user_match.first_name
+                    if user_match.first_name
+                    else f"{user_match.username}"
+                ),
                 "account_number": account_match.account_number,
                 "email": user_match.email,
             },
@@ -1248,7 +1300,10 @@ class ExecuteTransferView(APIView):
 
         if not recipient or not amount_raw or not pin:
             return Response(
-                {"success": False, "message": "Recipient, amount, and Transaction PIN are required."},
+                {
+                    "success": False,
+                    "message": "Recipient, amount, and Transaction PIN are required.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1258,7 +1313,10 @@ class ExecuteTransferView(APIView):
                 raise ValueError()
         except (ValueError, TypeError):
             return Response(
-                {"success": False, "message": "Transfer amount must be a positive number."},
+                {
+                    "success": False,
+                    "message": "Transfer amount must be a positive number.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1267,7 +1325,7 @@ class ExecuteTransferView(APIView):
             return Response(
                 {
                     "success": False,
-                    "message": "Transfer failed. Transaction amount exceeds the per-transaction limit of ₹50,000."
+                    "message": "Transfer failed. Transaction amount exceeds the per-transaction limit of ₹50,000.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -1277,13 +1335,16 @@ class ExecuteTransferView(APIView):
         import datetime
         from django.db.models import Sum
 
-        today_start = timezone.make_aware(datetime.datetime.combine(datetime.date.today(), datetime.time.min))
-        today_end = timezone.make_aware(datetime.datetime.combine(datetime.date.today(), datetime.time.max))
+        today_start = timezone.make_aware(
+            datetime.datetime.combine(datetime.date.today(), datetime.time.min)
+        )
+        today_end = timezone.make_aware(
+            datetime.datetime.combine(datetime.date.today(), datetime.time.max)
+        )
 
         today_sent_total = Transaction.objects.filter(
-            sender=user,
-            created_at__range=(today_start, today_end)
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            sender=user, created_at__range=(today_start, today_end)
+        ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
 
         if today_sent_total + amount > Decimal("200000.00"):
             remaining_limit = Decimal("200000.00") - today_sent_total
@@ -1297,13 +1358,18 @@ class ExecuteTransferView(APIView):
 
         if not user.pin_created or not user.transaction_pin:
             return Response(
-                {"success": False, "message": "You must create a Transaction PIN first from PIN Management."},
+                {
+                    "success": False,
+                    "message": "You must create a Transaction PIN first from PIN Management.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # 3. Check if the user is currently locked out
         if user.pin_locked_until and user.pin_locked_until > timezone.now():
-            remaining_seconds = int((user.pin_locked_until - timezone.now()).total_seconds())
+            remaining_seconds = int(
+                (user.pin_locked_until - timezone.now()).total_seconds()
+            )
             remaining_minutes = (remaining_seconds // 60) + 1
             return Response(
                 {
@@ -1368,12 +1434,16 @@ class ExecuteTransferView(APIView):
             if cleaned_phone:
                 user_match = User.objects.filter(phone__icontains=cleaned_phone).first()
                 if user_match:
-                    receiver_account = BankAccount.objects.filter(user=user_match).first()
+                    receiver_account = BankAccount.objects.filter(
+                        user=user_match
+                    ).first()
 
             # 3. Search by Account Number (fallback)
             if not receiver_account:
                 cleaned_acct = recipient.replace("-", "").replace(" ", "").upper()
-                receiver_account = BankAccount.objects.filter(account_number__iexact=cleaned_acct).first()
+                receiver_account = BankAccount.objects.filter(
+                    account_number__iexact=cleaned_acct
+                ).first()
                 if receiver_account:
                     user_match = receiver_account.user
 
@@ -1391,12 +1461,19 @@ class ExecuteTransferView(APIView):
 
         try:
             with transaction.atomic():
-                sender_acc_locked = BankAccount.objects.select_for_update().get(id=sender_account.id)
-                receiver_acc_locked = BankAccount.objects.select_for_update().get(id=receiver_account.id)
+                sender_acc_locked = BankAccount.objects.select_for_update().get(
+                    id=sender_account.id
+                )
+                receiver_acc_locked = BankAccount.objects.select_for_update().get(
+                    id=receiver_account.id
+                )
 
                 if sender_acc_locked.balance < amount:
                     return Response(
-                        {"success": False, "message": f"Insufficient funds. Your current balance is ${sender_acc_locked.balance:.2f}."},
+                        {
+                            "success": False,
+                            "message": f"Insufficient funds. Your current balance is ${sender_acc_locked.balance:.2f}.",
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
@@ -1417,16 +1494,18 @@ class ExecuteTransferView(APIView):
                     receiver=user_match,
                     amount=amount,
                     remarks=remarks,
-                    reference_id=ref_id
+                    reference_id=ref_id,
                 )
 
                 sender_remaining = sender_acc_locked.balance
                 receiver_new_balance = receiver_acc_locked.balance
 
             from .utils import send_debit_alert_email, send_credit_alert_email
-            
+
             sender_name = user.first_name if user.first_name else user.username
-            receiver_name = user_match.first_name if user_match.first_name else user_match.username
+            receiver_name = (
+                user_match.first_name if user_match.first_name else user_match.username
+            )
 
             send_debit_alert_email(
                 sender_email=user.email,
@@ -1436,7 +1515,7 @@ class ExecuteTransferView(APIView):
                 amount=amount,
                 remaining_balance=sender_remaining,
                 remarks=remarks,
-                transaction=txn_record
+                transaction=txn_record,
             )
 
             send_credit_alert_email(
@@ -1447,7 +1526,7 @@ class ExecuteTransferView(APIView):
                 amount=amount,
                 remaining_balance=receiver_new_balance,
                 remarks=remarks,
-                transaction=txn_record
+                transaction=txn_record,
             )
 
             # Trigger WebSockets real-time broadcasts for both users
@@ -1456,7 +1535,7 @@ class ExecuteTransferView(APIView):
                 from asgiref.sync import async_to_sync
                 from django.utils import timezone
                 from datetime import date
-                
+
                 def format_relative_date(dt):
                     local_dt = timezone.localtime(dt)
                     today_val = date.today()
@@ -1467,7 +1546,7 @@ class ExecuteTransferView(APIView):
                         return f"Yesterday, {local_dt.strftime('%I:%M %p')}"
                     else:
                         return local_dt.strftime("%b %d, %I:%M %p")
-                
+
                 channel_layer = get_channel_layer()
                 if channel_layer:
                     # Sender group broadcast
@@ -1485,11 +1564,11 @@ class ExecuteTransferView(APIView):
                                     "amount": f"{amount:.2f}",
                                     "date": format_relative_date(txn_record.created_at),
                                     "remarks": remarks,
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     )
-                    
+
                     # Receiver group broadcast
                     async_to_sync(channel_layer.group_send)(
                         f"user_{user_match.id}",
@@ -1505,12 +1584,13 @@ class ExecuteTransferView(APIView):
                                     "amount": f"{amount:.2f}",
                                     "date": format_relative_date(txn_record.created_at),
                                     "remarks": remarks,
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     )
             except Exception as ws_err:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.error(f"WebSocket live updates broadcast failed: {str(ws_err)}")
 
@@ -1539,11 +1619,11 @@ class TransactionHistoryView(APIView):
         from datetime import date
 
         user = request.user
-        
+
         # Get all transactions involving the user
         transactions = Transaction.objects.filter(
             Q(sender=user) | Q(receiver=user)
-        ).order_by('-created_at')
+        ).order_by("-created_at")
 
         def format_relative_date(dt):
             local_dt = timezone.localtime(dt)
@@ -1558,8 +1638,8 @@ class TransactionHistoryView(APIView):
 
         txn_list = []
         for txn in transactions:
-            is_debit = (txn.sender == user)
-            
+            is_debit = txn.sender == user
+
             # Format descriptions matching screenshot branding
             if not txn.sender:
                 description = "Vault Compliance Credit"
@@ -1568,16 +1648,20 @@ class TransactionHistoryView(APIView):
             else:
                 description = f"Inbound Transfer from {txn.sender.first_name or txn.sender.username}"
 
-            txn_list.append({
-                "id": txn.reference_id,
-                "description": description,
-                "type": "debit" if is_debit else "credit",
-                "amount": f"{txn.amount:.2f}",
-                "date": format_relative_date(txn.created_at),
-                "remarks": txn.remarks,
-            })
+            txn_list.append(
+                {
+                    "id": txn.reference_id,
+                    "description": description,
+                    "type": "debit" if is_debit else "credit",
+                    "amount": f"{txn.amount:.2f}",
+                    "date": format_relative_date(txn.created_at),
+                    "remarks": txn.remarks,
+                }
+            )
 
-        return Response({"success": True, "transactions": txn_list}, status=status.HTTP_200_OK)
+        return Response(
+            {"success": True, "transactions": txn_list}, status=status.HTTP_200_OK
+        )
 
 
 class StatementListView(APIView):
@@ -1586,63 +1670,69 @@ class StatementListView(APIView):
     def get(self, request, *args, **kwargs):
         import datetime
         from django.utils import timezone
-        
+
         user = request.user
-        
+
         # Calculate closed statement periods from user creation date
         start_date = user.created_at or timezone.now()
         current_date = timezone.now()
-        
+
         statements = []
         year, month = start_date.year, start_date.month
         curr_year, curr_month = current_date.year, current_date.month
-        
+
         # Collect past completed/closed months
         while (year < curr_year) or (year == curr_year and month < curr_month):
             period_date = datetime.date(year, month, 1)
             period_str = period_date.strftime("%B %Y")
-            
+
             if month == 12:
                 next_month_date = datetime.date(year + 1, 1, 1)
             else:
                 next_month_date = datetime.date(year, month + 1, 1)
-                
+
             issued_str = next_month_date.strftime("%B %d, %Y")
-            
+
             # Formulate deterministic sizes for screenshots
             mock_sizes = ["2.4 MB", "2.1 MB", "2.3 MB", "1.9 MB"]
             size_str = mock_sizes[(year + month) % len(mock_sizes)]
-            
-            statements.append({
-                "period": period_str,
-                "date": issued_str,
-                "size": size_str,
-                "year": year,
-                "month": month,
-                "download_url": f"http://localhost:8000/api/accounts/statements/download/{year}/{month}/"
-            })
-            
+
+            statements.append(
+                {
+                    "period": period_str,
+                    "date": issued_str,
+                    "size": size_str,
+                    "year": year,
+                    "month": month,
+                    "download_url": f"http://localhost:8000/api/accounts/statements/download/{year}/{month}/",
+                }
+            )
+
             # Step month forward
             if month == 12:
                 year += 1
                 month = 1
             else:
                 month += 1
-                
+
         # Always append the current active calendar month as an ongoing/real-time statement period
         active_date = datetime.date(curr_year, curr_month, 1)
         active_period_str = active_date.strftime("%B %Y")
-        statements.append({
-            "period": f"{active_period_str} (Ongoing)",
-            "date": "Real-time",
-            "size": "In Progress",
-            "year": curr_year,
-            "month": curr_month,
-            "download_url": f"http://localhost:8000/api/accounts/statements/download/{curr_year}/{curr_month}/"
-        })
-        
+        statements.append(
+            {
+                "period": f"{active_period_str} (Ongoing)",
+                "date": "Real-time",
+                "size": "In Progress",
+                "year": curr_year,
+                "month": curr_month,
+                "download_url": f"http://localhost:8000/api/accounts/statements/download/{curr_year}/{curr_month}/",
+            }
+        )
+
         statements.reverse()
-        return Response({"success": True, "statements": statements}, status=status.HTTP_200_OK)
+        return Response(
+            {"success": True, "statements": statements}, status=status.HTTP_200_OK
+        )
 
 
 class DownloadStatementPDFView(APIView):
@@ -1650,24 +1740,35 @@ class DownloadStatementPDFView(APIView):
 
     def get(self, request, year, month, *args, **kwargs):
         user = request.user
-        
+
         try:
             year = int(year)
             month = int(month)
         except ValueError:
-            return Response({"success": False, "message": "Invalid statement period parameters."}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return Response(
+                {"success": False, "message": "Invalid statement period parameters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             from .utils import generate_monthly_statement_pdf
             from django.http import HttpResponse
-            
+
             pdf_bytes = generate_monthly_statement_pdf(user, year, month)
-            
-            response = HttpResponse(pdf_bytes, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="Statement-{year}-{month:02d}.pdf"'
+
+            response = HttpResponse(pdf_bytes, content_type="application/pdf")
+            response["Content-Disposition"] = (
+                f'attachment; filename="Statement-{year}-{month:02d}.pdf"'
+            )
             return response
         except Exception as e:
-            return Response({"success": False, "message": f"Failed to generate statement download: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {
+                    "success": False,
+                    "message": f"Failed to generate statement download: {str(e)}",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class EmailStatementPDFView(APIView):
@@ -1675,23 +1776,27 @@ class EmailStatementPDFView(APIView):
 
     def post(self, request, year, month, *args, **kwargs):
         from django.conf import settings
+
         user = request.user
-        
+
         try:
             year = int(year)
             month = int(month)
         except ValueError:
-            return Response({"success": False, "message": "Invalid statement period parameters."}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return Response(
+                {"success": False, "message": "Invalid statement period parameters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             from .utils import generate_monthly_statement_pdf, send_mail_async
             import datetime
-            
+
             period_date = datetime.date(year, month, 1)
             period_str = period_date.strftime("%B %Y")
-            
+
             pdf_bytes = generate_monthly_statement_pdf(user, year, month)
-            
+
             subject = f"Secure Bank - Certified Monthly Statement Audit ({period_str})"
             message = (
                 f"Hello {user.first_name or user.username},\n\n"
@@ -1701,7 +1806,7 @@ class EmailStatementPDFView(APIView):
                 f"Best regards,\n"
                 f"Secure Bank Mainframe Operations"
             )
-            
+
             html_message = f"""
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #333333;">
                 <div style="text-align: center; margin-bottom: 25px;">
@@ -1723,30 +1828,39 @@ class EmailStatementPDFView(APIView):
                 <p style="font-size: 14px; font-weight: 700; color: #0a2540; margin-top: 0;">Secure Bank Ledger Security Control</p>
             </div>
             """
-            
+
             filename = f"Statement-{year}-{month:02d}.pdf"
             attachments = [(filename, pdf_bytes, "application/pdf")]
-            
-            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+
+            from_email = getattr(
+                settings,
+                "DEFAULT_FROM_EMAIL",
+                getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+            )
             send_mail_async(
                 subject=subject,
                 message=message,
                 from_email=from_email,
                 recipient_list=[user.email],
                 html_message=html_message,
-                attachments=attachments
+                attachments=attachments,
             )
-            
-            print(f"[EMAIL SENT] MONTHLY STATEMENT PDF EXPORTED TO {user.email} FOR {period_str}")
-            
+
+            print(
+                f"[EMAIL SENT] MONTHLY STATEMENT PDF EXPORTED TO {user.email} FOR {period_str}"
+            )
+
             return Response(
-                {"success": True, "message": f"Certified monthly statement for {period_str} has been successfully sent to your email address ({user.email})."},
-                status=status.HTTP_200_OK
+                {
+                    "success": True,
+                    "message": f"Certified monthly statement for {period_str} has been successfully sent to your email address ({user.email}).",
+                },
+                status=status.HTTP_200_OK,
             )
         except Exception as e:
             return Response(
                 {"success": False, "message": f"Failed to export statement: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -1756,18 +1870,24 @@ class FreezeUnfreezeCardView(APIView):
     def post(self, request, *args, **kwargs):
         bank_account = getattr(request.user, "bank_account", None)
         if not bank_account:
-            return Response({"success": False, "message": "Bank account not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"success": False, "message": "Bank account not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         bank_account.is_card_active = not bank_account.is_card_active
         bank_account.save()
-        
+
         status_str = "ACTIVE" if bank_account.is_card_active else "FROZEN"
-        return Response({
-            "success": True,
-            "message": f"Virtual card has been successfully {'unfrozen' if bank_account.is_card_active else 'frozen'}.",
-            "is_card_active": bank_account.is_card_active,
-            "status": status_str
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "success": True,
+                "message": f"Virtual card has been successfully {'unfrozen' if bank_account.is_card_active else 'frozen'}.",
+                "is_card_active": bank_account.is_card_active,
+                "status": status_str,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class RegenerateCvvView(APIView):
@@ -1776,18 +1896,25 @@ class RegenerateCvvView(APIView):
     def post(self, request, *args, **kwargs):
         bank_account = getattr(request.user, "bank_account", None)
         if not bank_account:
-            return Response({"success": False, "message": "Bank account not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"success": False, "message": "Bank account not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         import random
+
         new_cvv = f"{random.randint(100, 999)}"
         bank_account.card_cvv = new_cvv
         bank_account.save()
-        
-        return Response({
-            "success": True,
-            "message": "CVV regenerated successfully.",
-            "card_cvv": new_cvv
-        }, status=status.HTTP_200_OK)
+
+        return Response(
+            {
+                "success": True,
+                "message": "CVV regenerated successfully.",
+                "card_cvv": new_cvv,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class ReplaceCardView(APIView):
@@ -1796,28 +1923,38 @@ class ReplaceCardView(APIView):
     def post(self, request, *args, **kwargs):
         bank_account = getattr(request.user, "bank_account", None)
         if not bank_account:
-            return Response({"success": False, "message": "Bank account not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"success": False, "message": "Bank account not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         import random
+
         numeric_suffix = f"{random.randint(100000000000, 999999999999)}"
-        new_card_num = f"9821 {numeric_suffix[:4]} {numeric_suffix[4:8]} {numeric_suffix[8:12]}"
+        new_card_num = (
+            f"9821 {numeric_suffix[:4]} {numeric_suffix[4:8]} {numeric_suffix[8:12]}"
+        )
         new_cvv = f"{random.randint(100, 999)}"
-        
+
         bank_account.card_number = new_card_num
         bank_account.card_cvv = new_cvv
         bank_account.is_card_active = True
         from django.utils import timezone
+
         bank_account.card_created_at = timezone.now()
         bank_account.save()
-        
-        return Response({
-            "success": True,
-            "message": "Virtual debit card replaced successfully. Old parameters invalidated.",
-            "card_number": new_card_num,
-            "card_cvv": new_cvv,
-            "is_card_active": True,
-            "card_created_at": bank_account.card_created_at.strftime("%d %b %Y")
-        }, status=status.HTTP_200_OK)
+
+        return Response(
+            {
+                "success": True,
+                "message": "Virtual debit card replaced successfully. Old parameters invalidated.",
+                "card_number": new_card_num,
+                "card_cvv": new_cvv,
+                "is_card_active": True,
+                "card_created_at": bank_account.card_created_at.strftime("%d %b %Y"),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class AccountIdentityView(APIView):
@@ -1825,21 +1962,24 @@ class AccountIdentityView(APIView):
 
     def get(self, request, account_number, *args, **kwargs):
         try:
-            bank_account = BankAccount.objects.select_related("user").get(account_number=account_number)
+            bank_account = BankAccount.objects.select_related("user").get(
+                account_number=account_number
+            )
             user = bank_account.user
             full_name = f"{user.first_name} {user.last_name}".strip()
             if not full_name:
                 full_name = user.username
 
-            return Response({
-                "account_holder": full_name,
-                "account_number": bank_account.account_number,
-                "status": bank_account.status
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "account_holder": full_name,
+                    "account_number": bank_account.account_number,
+                    "status": bank_account.status,
+                },
+                status=status.HTTP_200_OK,
+            )
         except BankAccount.DoesNotExist:
-            return Response({
-                "success": False,
-                "message": "Account identity not found."
-            }, status=status.HTTP_404_NOT_FOUND)
-
-
+            return Response(
+                {"success": False, "message": "Account identity not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )

@@ -63,6 +63,9 @@ def send_otp_email(email, full_name=None):
     Generates a 6-digit secure OTP, deletes any previous active OTPs for the email,
     saves the new OTP in the database (valid for 5 minutes), and sends it to the user via email.
     """
+    print("OTP Function Started")
+    print("Email:", email)
+    print("Full Name:", full_name)
     # 1. Generate a 6-digit numeric OTP
     otp_code = "".join(random.choices(string.digits, k=6))
 
