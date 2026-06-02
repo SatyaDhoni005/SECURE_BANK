@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="bankGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  <!-- Base Foundation -->
+  <rect x="4" y="40" width="40" height="4" rx="2" fill="url(#bankGrad)" />
+  <rect x="6" y="36" width="36" height="4" rx="1" fill="url(#bankGrad)" opacity="0.9" />
+  
+  <!-- Classical Pillars -->
+  <rect x="10" y="18" width="4" height="18" rx="1.5" fill="url(#bankGrad)" />
+  <rect x="18" y="18" width="4" height="18" rx="1.5" fill="url(#bankGrad)" />
+  <rect x="26" y="18" width="4" height="18" rx="1.5" fill="url(#bankGrad)" />
+  <rect x="34" y="18" width="4" height="18" rx="1.5" fill="url(#bankGrad)" />
+  
+  <!-- Architrave / Ceiling bar -->
+  <rect x="6" y="14" width="36" height="4" rx="1" fill="url(#bankGrad)" />
+  
+  <!-- Triangular Roof Pediment -->
+  <path d="M4 12 L24 2 L44 12 Z" fill="url(#bankGrad)" />
+</svg>
