@@ -16,6 +16,7 @@ from .utils import (
     send_change_password_otp_email,
     send_pin_config_otp_email,
 )
+from django.core.mail import send_mail
 
 
 class SendOTPView(APIView):
@@ -1838,7 +1839,7 @@ class EmailStatementPDFView(APIView):
                 "DEFAULT_FROM_EMAIL",
                 getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
             )
-            send_mail_async(
+            send_mail(
                 subject=subject,
                 message=message,
                 from_email=from_email,
