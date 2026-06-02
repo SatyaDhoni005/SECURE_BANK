@@ -10,6 +10,7 @@ from .models import OTP
 def send_mail_async(
     subject, message, from_email, recipient_list, html_message, attachments=None
 ):
+    print("About to send email")
     """
     Sends email asynchronously using a background thread so that SMTP connection
     delays or failures do not block the HTTP request thread. Supports file attachments.
@@ -56,6 +57,7 @@ def send_mail_async(
             print("!" * 60 + "\n")
 
     threading.Thread(target=_send, daemon=True).start()
+    print("email sent successfully")
 
 
 def send_otp_email(email, full_name=None):

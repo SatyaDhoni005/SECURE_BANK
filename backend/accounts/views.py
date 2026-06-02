@@ -194,13 +194,14 @@ class ResendOTPView(APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get("email")
         name = request.data.get("name")
-
+        print("Resend otp called for email:", email)
         if not email:
             return Response(
                 {"success": False, "message": "Email address is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        print("Resend otp called for email:", email)
         # Ensure email is not already registered
         if User.objects.filter(email=email.lower()).exists():
             return Response(
