@@ -7,7 +7,9 @@ from django.conf import settings
 from .models import OTP
 
 
-def send_mail_async(subject, message, from_email, recipient_list, html_message, attachments=None):
+def send_mail_async(
+    subject, message, from_email, recipient_list, html_message, attachments=None
+):
     """
     Sends email asynchronously using a background thread so that SMTP connection
     delays or failures do not block the HTTP request thread. Supports file attachments.
@@ -16,6 +18,14 @@ def send_mail_async(subject, message, from_email, recipient_list, html_message, 
 
     def _send():
         try:
+            print("Thread Started...")
+            print("Attempting Email send")
+            print(f"From: {from_email}")
+            print(f"To: {recipient_list}")
+            print(f"Subject: {subject}")
+            print(f"Message: {message}")
+            print(f"HTML message: {html_message}")
+            print(f"Attachments: {attachments}")
             if attachments:
                 email = EmailMessage(
                     subject=subject,
@@ -25,10 +35,10 @@ def send_mail_async(subject, message, from_email, recipient_list, html_message, 
                 )
                 if html_message:
                     email.content_subtype = "html"
-                
+
                 for filename, content, mimetype in attachments:
                     email.attach(filename, content, mimetype)
-                
+
                 email.send(fail_silently=False)
             else:
                 send_mail(
@@ -39,6 +49,7 @@ def send_mail_async(subject, message, from_email, recipient_list, html_message, 
                     html_message=html_message,
                     fail_silently=False,
                 )
+                print("Email Sent Successfully")
         except Exception as e:
             print("\n" + "!" * 60)
             print(f"[ERROR] SMTP SECURE MAIL DISPATCH ASYNC FAILURE: {str(e)}")
@@ -116,7 +127,11 @@ def send_otp_email(email, full_name=None):
     print("═" * 60 + "\n")
 
     # Send asynchronously using background thread
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -182,7 +197,11 @@ def send_forgot_password_otp_email(email, full_name=None):
     print("═" * 60 + "\n")
 
     # Send asynchronously using background thread
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -249,7 +268,11 @@ def send_deactivation_otp_email(email, full_name=None):
     print("═" * 60 + "\n")
 
     # Send asynchronously using background thread
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -315,7 +338,11 @@ def send_reactivation_otp_email(email, full_name=None):
     print("═" * 60 + "\n")
 
     # Send asynchronously using background thread
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -380,7 +407,11 @@ def send_change_password_otp_email(email, full_name=None):
     print("═" * 60 + "\n")
 
     # Send asynchronously using background thread
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -443,7 +474,11 @@ def send_pin_config_otp_email(email, full_name=None):
     print(f"[SECURE PIN OTP] SECURE BANK TRANSACTION PIN OTP FOR {email}: {otp_code}")
     print("=" * 60 + "\n")
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -462,13 +497,19 @@ def generate_transaction_receipt_pdf(transaction, is_debit):
     """
     import io
     from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+    )
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib import colors
     from django.utils import timezone
 
     buffer = io.BytesIO()
-    
+
     # Page setup
     doc = SimpleDocTemplate(
         buffer,
@@ -476,192 +517,255 @@ def generate_transaction_receipt_pdf(transaction, is_debit):
         rightMargin=54,
         leftMargin=54,
         topMargin=54,
-        bottomMargin=54
+        bottomMargin=54,
     )
-    
+
     story = []
     styles = getSampleStyleSheet()
-    
+
     # Brand styles
-    primary_color = colors.HexColor("#0A2540") # Navy
-    accent_green = colors.HexColor("#10B981") # Green
-    accent_red = colors.HexColor("#EF4444") # Red
-    text_dark = colors.HexColor("#1E293B") # Charcoal
-    text_muted = colors.HexColor("#64748B") # Slate
+    primary_color = colors.HexColor("#0A2540")  # Navy
+    accent_green = colors.HexColor("#10B981")  # Green
+    accent_red = colors.HexColor("#EF4444")  # Red
+    text_dark = colors.HexColor("#1E293B")  # Charcoal
+    text_muted = colors.HexColor("#64748B")  # Slate
     bg_light = colors.HexColor("#F8FAFC")
     border_color = colors.HexColor("#E2E8F0")
 
     # Typography styles
     title_style = ParagraphStyle(
-        'DocTitle',
-        parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
+        "DocTitle",
+        parent=styles["Heading1"],
+        fontName="Helvetica-Bold",
         fontSize=24,
         textColor=primary_color,
-        spaceAfter=4
+        spaceAfter=4,
     )
-    
+
     subtitle_style = ParagraphStyle(
-        'DocSubtitle',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
+        "DocSubtitle",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
         fontSize=10,
         textColor=text_muted,
-        spaceAfter=15
+        spaceAfter=15,
     )
 
     heading_style = ParagraphStyle(
-        'DocHeading',
-        parent=styles['Heading2'],
-        fontName='Helvetica-Bold',
+        "DocHeading",
+        parent=styles["Heading2"],
+        fontName="Helvetica-Bold",
         fontSize=12,
         textColor=primary_color,
-        spaceAfter=8
+        spaceAfter=8,
     )
 
     body_style = ParagraphStyle(
-        'DocBody',
-        parent=styles['Normal'],
-        fontName='Helvetica',
+        "DocBody",
+        parent=styles["Normal"],
+        fontName="Helvetica",
         fontSize=10,
         textColor=text_dark,
-        leading=14
+        leading=14,
     )
 
     body_bold = ParagraphStyle(
-        'DocBodyBold',
-        parent=body_style,
-        fontName='Helvetica-Bold'
+        "DocBodyBold", parent=body_style, fontName="Helvetica-Bold"
     )
 
     body_mono = ParagraphStyle(
-        'DocBodyMono',
-        parent=body_style,
-        fontName='Courier',
-        fontSize=9
+        "DocBodyMono", parent=body_style, fontName="Courier", fontSize=9
     )
 
     # Document Header
     story.append(Paragraph("SECURE BANK", title_style))
-    story.append(Paragraph("OFFICIAL TRANSACTION RECORD & AUDIT LEDGER", subtitle_style))
-    
+    story.append(
+        Paragraph("OFFICIAL TRANSACTION RECORD & AUDIT LEDGER", subtitle_style)
+    )
+
     # Decorative line
     line_table = Table([[""]], colWidths=[500])
-    line_table.setStyle(TableStyle([
-        ('LINEABOVE', (0,0), (-1,-1), 1.5, primary_color),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-    ]))
+    line_table.setStyle(
+        TableStyle(
+            [
+                ("LINEABOVE", (0, 0), (-1, -1), 1.5, primary_color),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
     story.append(line_table)
     story.append(Spacer(1, 15))
-    
+
     # Status Banner
     banner_bg = colors.HexColor("#FEE2E2") if is_debit else colors.HexColor("#D1FAE5")
-    banner_border = colors.HexColor("#FCA5A5") if is_debit else colors.HexColor("#A7F3D0")
-    banner_text_color = colors.HexColor("#991B1B") if is_debit else colors.HexColor("#065F46")
-    banner_text = "OUTBOUND DEBIT RECORD - FUNDS TRANSFERRED" if is_debit else "INBOUND CREDIT RECORD - FUNDS RECEIVED"
-    
+    banner_border = (
+        colors.HexColor("#FCA5A5") if is_debit else colors.HexColor("#A7F3D0")
+    )
+    banner_text_color = (
+        colors.HexColor("#991B1B") if is_debit else colors.HexColor("#065F46")
+    )
+    banner_text = (
+        "OUTBOUND DEBIT RECORD - FUNDS TRANSFERRED"
+        if is_debit
+        else "INBOUND CREDIT RECORD - FUNDS RECEIVED"
+    )
+
     banner_style = ParagraphStyle(
-        'BannerText',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
+        "BannerText",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
         fontSize=11,
         textColor=banner_text_color,
-        alignment=1 # Centered
+        alignment=1,  # Centered
     )
-    
+
     banner_p = Paragraph(banner_text, banner_style)
     banner_table = Table([[banner_p]], colWidths=[500])
-    banner_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), banner_bg),
-        ('BOX', (0,0), (-1,-1), 1, banner_border),
-        ('TOPPADDING', (0,0), (-1,-1), 10),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 15),
-        ('RIGHTPADDING', (0,0), (-1,-1), 15),
-    ]))
+    banner_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), banner_bg),
+                ("BOX", (0, 0), (-1, -1), 1, banner_border),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ("LEFTPADDING", (0, 0), (-1, -1), 15),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 15),
+            ]
+        )
+    )
     story.append(banner_table)
     story.append(Spacer(1, 20))
-    
+
     # Details Grid
     story.append(Paragraph("Transaction Specifications", heading_style))
-    
+
     local_time = timezone.localtime(transaction.created_at)
     date_str = local_time.strftime("%B %d, %Y")
     time_str = local_time.strftime("%I:%M %p %Z")
-    
-    sender_name = transaction.sender.first_name if transaction.sender else "SYSTEM WELCOME DEPOSIT"
-    sender_email = transaction.sender.email if transaction.sender else "mainframe@securebank.com"
+
+    sender_name = (
+        transaction.sender.first_name
+        if transaction.sender
+        else "SYSTEM WELCOME DEPOSIT"
+    )
+    sender_email = (
+        transaction.sender.email if transaction.sender else "mainframe@securebank.com"
+    )
     sender_phone = transaction.sender.phone if transaction.sender else "N/A"
-    sender_acct = transaction.sender.bank_account.account_number if transaction.sender else "N/A"
-    
-    receiver_name = transaction.receiver.first_name if transaction.receiver else "SYSTEM"
+    sender_acct = (
+        transaction.sender.bank_account.account_number if transaction.sender else "N/A"
+    )
+
+    receiver_name = (
+        transaction.receiver.first_name if transaction.receiver else "SYSTEM"
+    )
     receiver_email = transaction.receiver.email if transaction.receiver else "N/A"
     receiver_phone = transaction.receiver.phone if transaction.receiver else "N/A"
-    receiver_acct = transaction.receiver.bank_account.account_number if transaction.receiver else "N/A"
-    
-    amount_style = ParagraphStyle(
-        'AmountStyle',
-        parent=body_style,
-        fontName='Helvetica-Bold',
-        fontSize=12,
-        textColor=accent_red if is_debit else accent_green
+    receiver_acct = (
+        transaction.receiver.bank_account.account_number
+        if transaction.receiver
+        else "N/A"
     )
-    
+
+    amount_style = ParagraphStyle(
+        "AmountStyle",
+        parent=body_style,
+        fontName="Helvetica-Bold",
+        fontSize=12,
+        textColor=accent_red if is_debit else accent_green,
+    )
+
     amount_prefix = "-" if is_debit else "+"
     amount_str = f"{amount_prefix}${transaction.amount:.2f}"
-    
+
     grid_data = [
-        [Paragraph("Transaction Reference", body_bold), Paragraph(transaction.reference_id, body_mono)],
-        [Paragraph("Date & Time", body_bold), Paragraph(f"{date_str} at {time_str}", body_style)],
+        [
+            Paragraph("Transaction Reference", body_bold),
+            Paragraph(transaction.reference_id, body_mono),
+        ],
+        [
+            Paragraph("Date & Time", body_bold),
+            Paragraph(f"{date_str} at {time_str}", body_style),
+        ],
         [Paragraph("Transfer Amount", body_bold), Paragraph(amount_str, amount_style)],
-        [Paragraph("Remarks / Memo", body_bold), Paragraph(transaction.remarks or "N/A", body_style)],
-        [Paragraph("Sender Details", body_bold), Paragraph(f"{sender_name}<br/>Acc: {sender_acct}<br/>Email: {sender_email}<br/>Phone: {sender_phone}", body_style)],
-        [Paragraph("Receiver Details", body_bold), Paragraph(f"{receiver_name}<br/>Acc: {receiver_acct}<br/>Email: {receiver_email}<br/>Phone: {receiver_phone}", body_style)],
+        [
+            Paragraph("Remarks / Memo", body_bold),
+            Paragraph(transaction.remarks or "N/A", body_style),
+        ],
+        [
+            Paragraph("Sender Details", body_bold),
+            Paragraph(
+                f"{sender_name}<br/>Acc: {sender_acct}<br/>Email: {sender_email}<br/>Phone: {sender_phone}",
+                body_style,
+            ),
+        ],
+        [
+            Paragraph("Receiver Details", body_bold),
+            Paragraph(
+                f"{receiver_name}<br/>Acc: {receiver_acct}<br/>Email: {receiver_email}<br/>Phone: {receiver_phone}",
+                body_style,
+            ),
+        ],
     ]
-    
+
     grid_table = Table(grid_data, colWidths=[150, 350])
-    grid_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), bg_light),
-        ('BOX', (0,0), (-1,-1), 1, border_color),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, border_color),
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('TOPPADDING', (0,0), (-1,-1), 8),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-        ('LEFTPADDING', (0,0), (-1,-1), 12),
-        ('RIGHTPADDING', (0,0), (-1,-1), 12),
-    ]))
-    
+    grid_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), bg_light),
+                ("BOX", (0, 0), (-1, -1), 1, border_color),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, border_color),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+            ]
+        )
+    )
+
     story.append(grid_table)
     story.append(Spacer(1, 30))
-    
+
     footer_notice_style = ParagraphStyle(
-        'FooterNotice',
-        parent=styles['Normal'],
-        fontName='Helvetica-Oblique',
+        "FooterNotice",
+        parent=styles["Normal"],
+        fontName="Helvetica-Oblique",
         fontSize=8,
         textColor=text_muted,
         alignment=1,
-        leading=12
+        leading=12,
     )
-    
-    story.append(Paragraph(
-        "This is an official cryptographically logged transaction receipt generated directly from the Secure Bank mainframe ledgers.<br/>"
-        "If you did not authorize this activity, please freeze your credentials or notify mainframe security operations immediately.<br/>"
-        "Support: support@securebank.com | Mainframe Access Security Control",
-        footer_notice_style
-    ))
-    
+
+    story.append(
+        Paragraph(
+            "This is an official cryptographically logged transaction receipt generated directly from the Secure Bank mainframe ledgers.<br/>"
+            "If you did not authorize this activity, please freeze your credentials or notify mainframe security operations immediately.<br/>"
+            "Support: support@securebank.com | Mainframe Access Security Control",
+            footer_notice_style,
+        )
+    )
+
     doc.build(story)
-    
+
     buffer.seek(0)
     pdf_bytes = buffer.getvalue()
     buffer.close()
-    
+
     return pdf_bytes
 
 
-def send_debit_alert_email(sender_email, sender_name, receiver_name, receiver_account, amount, remaining_balance, remarks=None, transaction=None):
+def send_debit_alert_email(
+    sender_email,
+    sender_name,
+    receiver_name,
+    receiver_account,
+    amount,
+    remaining_balance,
+    remarks=None,
+    transaction=None,
+):
     """
     Sends an elegant, red-themed HTML debit alert email to the sender with a ReportLab PDF receipt attached.
     """
@@ -743,7 +847,9 @@ def send_debit_alert_email(sender_email, sender_name, receiver_name, receiver_ac
             pdf_data = generate_transaction_receipt_pdf(transaction, is_debit=True)
             filename = f"Receipt-{transaction.reference_id}.pdf"
             attachments = [(filename, pdf_data, "application/pdf")]
-            print(f"[PDF ATTACHMENT] PDF RECEIPT ATTACHED SUCCESSFULLY FOR SENDER: {filename}")
+            print(
+                f"[PDF ATTACHMENT] PDF RECEIPT ATTACHED SUCCESSFULLY FOR SENDER: {filename}"
+            )
         except Exception as e:
             print(f"[ERROR] FAILED TO GENERATE PDF RECEIPT FOR SENDER: {str(e)}")
 
@@ -754,7 +860,11 @@ def send_debit_alert_email(sender_email, sender_name, receiver_name, receiver_ac
     print(f"   Remarks: {remarks_str}")
     print("-" * 60 + "\n")
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -765,7 +875,16 @@ def send_debit_alert_email(sender_email, sender_name, receiver_name, receiver_ac
     )
 
 
-def send_credit_alert_email(receiver_email, receiver_name, sender_name, sender_account, amount, remaining_balance, remarks=None, transaction=None):
+def send_credit_alert_email(
+    receiver_email,
+    receiver_name,
+    sender_name,
+    sender_account,
+    amount,
+    remaining_balance,
+    remarks=None,
+    transaction=None,
+):
     """
     Sends an elegant, green-themed HTML credit alert email to the receiver with a ReportLab PDF receipt attached.
     """
@@ -842,7 +961,9 @@ def send_credit_alert_email(receiver_email, receiver_name, sender_name, sender_a
             pdf_data = generate_transaction_receipt_pdf(transaction, is_debit=False)
             filename = f"Receipt-{transaction.reference_id}.pdf"
             attachments = [(filename, pdf_data, "application/pdf")]
-            print(f"[PDF ATTACHMENT] PDF RECEIPT ATTACHED SUCCESSFULLY FOR RECEIVER: {filename}")
+            print(
+                f"[PDF ATTACHMENT] PDF RECEIPT ATTACHED SUCCESSFULLY FOR RECEIVER: {filename}"
+            )
         except Exception as e:
             print(f"[ERROR] FAILED TO GENERATE PDF RECEIPT FOR RECEIVER: {str(e)}")
 
@@ -853,7 +974,11 @@ def send_credit_alert_email(receiver_email, receiver_name, sender_name, sender_a
     print(f"   Remarks: {remarks_str}")
     print("+" * 60 + "\n")
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"))
+    from_email = getattr(
+        settings,
+        "DEFAULT_FROM_EMAIL",
+        getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
+    )
     send_mail_async(
         subject=subject,
         message=message,
@@ -874,40 +999,58 @@ def generate_monthly_statement_pdf(user, year, month):
     from django.db.models import Q
     from django.utils import timezone
     from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+    )
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib import colors
     from .models import Transaction
 
-    start_date = datetime.datetime(year, month, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+    start_date = datetime.datetime(
+        year, month, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+    )
     if month == 12:
-        end_date = datetime.datetime(year + 1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+        end_date = datetime.datetime(
+            year + 1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+        )
     else:
-        end_date = datetime.datetime(year, month + 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
-        
+        end_date = datetime.datetime(
+            year, month + 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+        )
+
     transactions = Transaction.objects.filter(
         Q(sender=user) | Q(receiver=user),
         created_at__gte=start_date,
-        created_at__lt=end_date
-    ).order_by('created_at')
-    
+        created_at__lt=end_date,
+    ).order_by("created_at")
+
     total_inflows = 0.00
     total_outflows = 0.00
     ledger_rows = []
-    
+
     for txn in transactions:
-        is_debit = (txn.sender == user)
+        is_debit = txn.sender == user
         local_time = timezone.localtime(txn.created_at)
         date_str = local_time.strftime("%Y-%m-%d %H:%M")
         ref_str = txn.reference_id
-        
+
         if not txn.sender:
             remarks_str = "Vault Compliance Credit"
         elif is_debit:
-            remarks_str = txn.remarks or f"Outbound Transfer to {txn.receiver.first_name or txn.receiver.username}"
+            remarks_str = (
+                txn.remarks
+                or f"Outbound Transfer to {txn.receiver.first_name or txn.receiver.username}"
+            )
         else:
-            remarks_str = txn.remarks or f"Inbound Deposit from {txn.sender.first_name or txn.sender.username}"
-        
+            remarks_str = (
+                txn.remarks
+                or f"Inbound Deposit from {txn.sender.first_name or txn.sender.username}"
+            )
+
         amount_val = float(txn.amount)
         if is_debit:
             total_outflows += amount_val
@@ -917,15 +1060,17 @@ def generate_monthly_statement_pdf(user, year, month):
             total_inflows += amount_val
             inflow_str = f"+${amount_val:.2f}"
             outflow_str = ""
-            
-        ledger_rows.append([
-            date_str,
-            ref_str,
-            remarks_str,
-            inflow_str,
-            outflow_str,
-        ])
-        
+
+        ledger_rows.append(
+            [
+                date_str,
+                ref_str,
+                remarks_str,
+                inflow_str,
+                outflow_str,
+            ]
+        )
+
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -933,12 +1078,12 @@ def generate_monthly_statement_pdf(user, year, month):
         rightMargin=54,
         leftMargin=54,
         topMargin=54,
-        bottomMargin=54
+        bottomMargin=54,
     )
-    
+
     story = []
     styles = getSampleStyleSheet()
-    
+
     primary_color = colors.HexColor("#0A2540")
     accent_green = colors.HexColor("#10B981")
     accent_red = colors.HexColor("#EF4444")
@@ -948,171 +1093,240 @@ def generate_monthly_statement_pdf(user, year, month):
     border_color = colors.HexColor("#E2E8F0")
 
     title_style = ParagraphStyle(
-        'DocTitle',
-        parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
+        "DocTitle",
+        parent=styles["Heading1"],
+        fontName="Helvetica-Bold",
         fontSize=24,
         textColor=primary_color,
-        spaceAfter=4
+        spaceAfter=4,
     )
-    
+
     subtitle_style = ParagraphStyle(
-        'DocSubtitle',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
+        "DocSubtitle",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
         fontSize=10,
         textColor=text_muted,
-        spaceAfter=15
+        spaceAfter=15,
     )
 
     heading_style = ParagraphStyle(
-        'DocHeading',
-        parent=styles['Heading2'],
-        fontName='Helvetica-Bold',
+        "DocHeading",
+        parent=styles["Heading2"],
+        fontName="Helvetica-Bold",
         fontSize=12,
         textColor=primary_color,
-        spaceAfter=10
+        spaceAfter=10,
     )
 
     body_style = ParagraphStyle(
-        'DocBody',
-        parent=styles['Normal'],
-        fontName='Helvetica',
+        "DocBody",
+        parent=styles["Normal"],
+        fontName="Helvetica",
         fontSize=9,
         textColor=text_dark,
-        leading=13
+        leading=13,
     )
 
     body_bold = ParagraphStyle(
-        'DocBodyBold',
-        parent=body_style,
-        fontName='Helvetica-Bold'
+        "DocBodyBold", parent=body_style, fontName="Helvetica-Bold"
     )
 
     body_mono = ParagraphStyle(
-        'DocBodyMono',
-        parent=body_style,
-        fontName='Courier',
-        fontSize=8
+        "DocBodyMono", parent=body_style, fontName="Courier", fontSize=8
     )
 
     # Build Document
     story.append(Paragraph("SECURE BANK", title_style))
     period_date = datetime.date(year, month, 1)
     period_str = period_date.strftime("%B %Y")
-    story.append(Paragraph(f"CERTIFIED MONTHLY STATEMENT AUDIT - {period_str.upper()}", subtitle_style))
-    
+    story.append(
+        Paragraph(
+            f"CERTIFIED MONTHLY STATEMENT AUDIT - {period_str.upper()}", subtitle_style
+        )
+    )
+
     line_table = Table([[""]], colWidths=[500])
-    line_table.setStyle(TableStyle([
-        ('LINEABOVE', (0,0), (-1,-1), 1.5, primary_color),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-    ]))
+    line_table.setStyle(
+        TableStyle(
+            [
+                ("LINEABOVE", (0, 0), (-1, -1), 1.5, primary_color),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
     story.append(line_table)
     story.append(Spacer(1, 15))
-    
+
     owner_name = user.first_name if user.first_name else user.username
-    acct_num = user.bank_account.account_number if hasattr(user, 'bank_account') else "N/A"
-    
+    acct_num = (
+        user.bank_account.account_number if hasattr(user, "bank_account") else "N/A"
+    )
+
     spec_data = [
-        [Paragraph("Account Holder", body_bold), Paragraph(owner_name, body_style), Paragraph("Statement Period", body_bold), Paragraph(period_str, body_style)],
-        [Paragraph("Bank Identifier", body_bold), Paragraph(acct_num, body_style), Paragraph("Generation Date", body_bold), Paragraph(timezone.now().strftime("%Y-%m-%d"), body_style)],
+        [
+            Paragraph("Account Holder", body_bold),
+            Paragraph(owner_name, body_style),
+            Paragraph("Statement Period", body_bold),
+            Paragraph(period_str, body_style),
+        ],
+        [
+            Paragraph("Bank Identifier", body_bold),
+            Paragraph(acct_num, body_style),
+            Paragraph("Generation Date", body_bold),
+            Paragraph(timezone.now().strftime("%Y-%m-%d"), body_style),
+        ],
     ]
     spec_table = Table(spec_data, colWidths=[110, 140, 110, 140])
-    spec_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), bg_light),
-        ('BOX', (0,0), (-1,-1), 1, border_color),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, border_color),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
-        ('RIGHTPADDING', (0,0), (-1,-1), 10),
-    ]))
+    spec_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), bg_light),
+                ("BOX", (0, 0), (-1, -1), 1, border_color),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, border_color),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+            ]
+        )
+    )
     story.append(spec_table)
     story.append(Spacer(1, 20))
-    
+
     story.append(Paragraph("Statement Period Activity Summary", heading_style))
-    
+
     summary_data = [
-        [Paragraph("Total Dynamic Deposits Inflow (+)", body_style), Paragraph(f"+${total_inflows:.2f}", ParagraphStyle('GreenText', parent=body_bold, textColor=accent_green))],
-        [Paragraph("Total Outbound Ledger Outflow (-)", body_style), Paragraph(f"-${total_outflows:.2f}", ParagraphStyle('RedText', parent=body_bold, textColor=accent_red))],
-        [Paragraph("Net Periodic Cash Flow Changes", body_style), Paragraph(f"${(total_inflows - total_outflows):+.2f}", body_bold)],
+        [
+            Paragraph("Total Dynamic Deposits Inflow (+)", body_style),
+            Paragraph(
+                f"+${total_inflows:.2f}",
+                ParagraphStyle("GreenText", parent=body_bold, textColor=accent_green),
+            ),
+        ],
+        [
+            Paragraph("Total Outbound Ledger Outflow (-)", body_style),
+            Paragraph(
+                f"-${total_outflows:.2f}",
+                ParagraphStyle("RedText", parent=body_bold, textColor=accent_red),
+            ),
+        ],
+        [
+            Paragraph("Net Periodic Cash Flow Changes", body_style),
+            Paragraph(f"${(total_inflows - total_outflows):+.2f}", body_bold),
+        ],
     ]
     summary_table = Table(summary_data, colWidths=[250, 250])
-    summary_table.setStyle(TableStyle([
-        ('BOX', (0,0), (-1,-1), 1, border_color),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, border_color),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('LEFTPADDING', (0,0), (-1,-1), 12),
-        ('RIGHTPADDING', (0,0), (-1,-1), 12),
-    ]))
+    summary_table.setStyle(
+        TableStyle(
+            [
+                ("BOX", (0, 0), (-1, -1), 1, border_color),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, border_color),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+            ]
+        )
+    )
     story.append(summary_table)
     story.append(Spacer(1, 25))
-    
+
     story.append(Paragraph("Certified Ledger Audit Entries", heading_style))
-    
-    headers = [Paragraph("Timestamp", body_bold), Paragraph("Reference ID", body_bold), Paragraph("Transaction Details", body_bold), Paragraph("Inflow (+)", body_bold), Paragraph("Outflow (-)", body_bold)]
+
+    headers = [
+        Paragraph("Timestamp", body_bold),
+        Paragraph("Reference ID", body_bold),
+        Paragraph("Transaction Details", body_bold),
+        Paragraph("Inflow (+)", body_bold),
+        Paragraph("Outflow (-)", body_bold),
+    ]
     table_rows = [headers]
-    
+
     for row in ledger_rows:
-        table_rows.append([
-            Paragraph(row[0], body_style),
-            Paragraph(row[1], body_mono),
-            Paragraph(row[2], body_style),
-            Paragraph(row[3], ParagraphStyle('G', parent=body_bold, textColor=accent_green)) if row[3] else Paragraph("", body_style),
-            Paragraph(row[4], ParagraphStyle('R', parent=body_bold, textColor=accent_red)) if row[4] else Paragraph("", body_style),
-        ])
-        
+        table_rows.append(
+            [
+                Paragraph(row[0], body_style),
+                Paragraph(row[1], body_mono),
+                Paragraph(row[2], body_style),
+                (
+                    Paragraph(
+                        row[3],
+                        ParagraphStyle("G", parent=body_bold, textColor=accent_green),
+                    )
+                    if row[3]
+                    else Paragraph("", body_style)
+                ),
+                (
+                    Paragraph(
+                        row[4],
+                        ParagraphStyle("R", parent=body_bold, textColor=accent_red),
+                    )
+                    if row[4]
+                    else Paragraph("", body_style)
+                ),
+            ]
+        )
+
     if len(transactions) == 0:
-        table_rows.append([Paragraph("No transactions recorded during this period.", body_style), "", "", "", ""])
-        
+        table_rows.append(
+            [
+                Paragraph("No transactions recorded during this period.", body_style),
+                "",
+                "",
+                "",
+                "",
+            ]
+        )
+
     col_widths = [90, 80, 170, 80, 80]
     ledger_table = Table(table_rows, colWidths=col_widths)
-    
-    ledger_style = TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), primary_color),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8),
-        ('BOX', (0,0), (-1,-1), 1, border_color),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, border_color),
-    ])
-    
+
+    ledger_style = TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), primary_color),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ("BOX", (0, 0), (-1, -1), 1, border_color),
+            ("INNERGRID", (0, 0), (-1, -1), 0.5, border_color),
+        ]
+    )
+
     for i in range(len(headers)):
         headers[i].style.textColor = colors.white
-        
+
     ledger_table.setStyle(ledger_style)
     story.append(ledger_table)
     story.append(Spacer(1, 30))
-    
+
     footer_style = ParagraphStyle(
-        'Footer',
-        parent=styles['Normal'],
-        fontName='Helvetica-Oblique',
+        "Footer",
+        parent=styles["Normal"],
+        fontName="Helvetica-Oblique",
         fontSize=8,
         textColor=text_muted,
         alignment=1,
-        leading=11
+        leading=11,
     )
-    story.append(Paragraph(
-        "Certified by the Secure Bank Mainframe Cryptographic Ledger Administration.<br/>"
-        "This statement serves as a regulatory-approved ledger record. For discrepancies, please raise an audit reference within 30 days of the generation date.<br/>"
-        "Official Wealth Gateway Operations Portal",
-        footer_style
-    ))
-    
+    story.append(
+        Paragraph(
+            "Certified by the Secure Bank Mainframe Cryptographic Ledger Administration.<br/>"
+            "This statement serves as a regulatory-approved ledger record. For discrepancies, please raise an audit reference within 30 days of the generation date.<br/>"
+            "Official Wealth Gateway Operations Portal",
+            footer_style,
+        )
+    )
+
     doc.build(story)
     buffer.seek(0)
     pdf_bytes = buffer.getvalue()
     buffer.close()
-    
+
     return pdf_bytes
-
-
-

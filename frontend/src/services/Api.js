@@ -4,6 +4,7 @@
  */
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+console.log("API_BASE:",API_BASE)
 const LATENCY_MS = 1500;
 
 export const ApiService = {
