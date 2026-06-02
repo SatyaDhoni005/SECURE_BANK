@@ -7,7 +7,7 @@ from django.conf import settings
 from .models import OTP
 
 
-def send_mail_async(
+def send_mail(
     subject, message, from_email, recipient_list, html_message, attachments=None
 ):
     print("About to send email")
@@ -137,7 +137,7 @@ def send_otp_email(email, full_name=None):
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,
@@ -207,7 +207,7 @@ def send_forgot_password_otp_email(email, full_name=None):
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,
@@ -278,7 +278,7 @@ def send_deactivation_otp_email(email, full_name=None):
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,
@@ -348,7 +348,7 @@ def send_reactivation_otp_email(email, full_name=None):
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,
@@ -417,7 +417,7 @@ def send_change_password_otp_email(email, full_name=None):
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,
@@ -484,7 +484,7 @@ def send_pin_config_otp_email(email, full_name=None):
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,
@@ -870,7 +870,7 @@ def send_debit_alert_email(
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,
@@ -984,7 +984,7 @@ def send_credit_alert_email(
         "DEFAULT_FROM_EMAIL",
         getattr(settings, "EMAIL_HOST_USER", "security@securebank.com"),
     )
-    send_mail_async(
+    send_mail(
         subject=subject,
         message=message,
         from_email=from_email,

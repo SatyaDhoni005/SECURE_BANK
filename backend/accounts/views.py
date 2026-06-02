@@ -1791,7 +1791,7 @@ class EmailStatementPDFView(APIView):
             )
 
         try:
-            from .utils import generate_monthly_statement_pdf, send_mail_async
+            from .utils import generate_monthly_statement_pdf, send_mail
             import datetime
 
             period_date = datetime.date(year, month, 1)
