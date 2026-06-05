@@ -33,7 +33,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-default")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,secure-bank-backend-j3f3.onrender.com").split(",")
 
 
 # Application definition
@@ -71,6 +71,9 @@ ROOT_URLCONF = "backend.urls"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     "http://192.168.1.7:5173",
 ]
 
