@@ -1,7 +1,7 @@
 import random
 import string
 import threading
-from django.core.mail import send_mail
+from django.core.mail import send_mail as django_send_mail
 from django.utils import timezone
 from django.conf import settings
 from .models import OTP
@@ -23,9 +23,10 @@ def send_mail(
             print("Attempting Email send")
             print(f"From: {from_email}")
             print(f"To: {recipient_list}")
-            print(f"Subject: {subject}")
-            print(f"Message: {message}")
-            print(f"HTML message: {html_message}")
+            safe_subject = subject.encode('ascii', errors='replace').decode('ascii')
+            print(f"Subject: {safe_subject}")
+            print(f"Message length: {len(message)}")
+            print(f"HTML message length: {len(html_message) if html_message else 0}")
             print(f"Attachments: {attachments}")
             if attachments:
                 email = EmailMessage(
@@ -42,7 +43,7 @@ def send_mail(
 
                 email.send(fail_silently=False)
             else:
-                send_mail(
+                django_send_mail(
                     subject=subject,
                     message=message,
                     from_email=from_email,
@@ -52,6 +53,8 @@ def send_mail(
                 )
                 print("Email Sent Successfully")
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print("\n" + "!" * 60)
             print(f"[ERROR] SMTP SECURE MAIL DISPATCH ASYNC FAILURE: {str(e)}")
             print("!" * 60 + "\n")
@@ -127,9 +130,9 @@ def send_otp_email(email, full_name=None):
 
     # Print the OTP clearly in the backend console so that local development and testing
     # is 100% possible even if SMTP settings are not active or internet is offline.
-    print("\n" + "═" * 60)
-    print(f"🔐 SECURE BANK GENERATED VERIFICATION OTP FOR {email}: {otp_code}")
-    print("═" * 60 + "\n")
+    print("\n" + "=" * 60)
+    print(f"[OTP] SECURE BANK GENERATED VERIFICATION OTP FOR {email}: {otp_code}")
+    print("=" * 60 + "\n")
 
     # Send asynchronously using background thread
     from_email = getattr(
@@ -197,9 +200,9 @@ def send_forgot_password_otp_email(email, full_name=None):
     </div>
     """
 
-    print("\n" + "═" * 60)
-    print(f"🔑 SECURE BANK PASSWORD RESET OTP FOR {email}: {otp_code}")
-    print("═" * 60 + "\n")
+    print("\n" + "=" * 60)
+    print(f"[RESET] SECURE BANK PASSWORD RESET OTP FOR {email}: {otp_code}")
+    print("=" * 60 + "\n")
 
     # Send asynchronously using background thread
     from_email = getattr(
@@ -268,9 +271,9 @@ def send_deactivation_otp_email(email, full_name=None):
     </div>
     """
 
-    print("\n" + "═" * 60)
-    print(f"🛑 SECURE BANK ACCOUNT DEACTIVATION OTP FOR {email}: {otp_code}")
-    print("═" * 60 + "\n")
+    print("\n" + "=" * 60)
+    print(f"[DEACTIVATE] SECURE BANK ACCOUNT DEACTIVATION OTP FOR {email}: {otp_code}")
+    print("=" * 60 + "\n")
 
     # Send asynchronously using background thread
     from_email = getattr(
@@ -338,9 +341,9 @@ def send_reactivation_otp_email(email, full_name=None):
     </div>
     """
 
-    print("\n" + "═" * 60)
-    print(f"✨ SECURE BANK ACCOUNT REACTIVATION OTP FOR {email}: {otp_code}")
-    print("═" * 60 + "\n")
+    print("\n" + "=" * 60)
+    print(f"[REACTIVATE] SECURE BANK ACCOUNT REACTIVATION OTP FOR {email}: {otp_code}")
+    print("=" * 60 + "\n")
 
     # Send asynchronously using background thread
     from_email = getattr(
@@ -407,9 +410,9 @@ def send_change_password_otp_email(email, full_name=None):
     </div>
     """
 
-    print("\n" + "═" * 60)
-    print(f"🔐 SECURE BANK PASSWORD CHANGE OTP FOR {email}: {otp_code}")
-    print("═" * 60 + "\n")
+    print("\n" + "=" * 60)
+    print(f"[PASSWORD CHANGE] SECURE BANK PASSWORD CHANGE OTP FOR {email}: {otp_code}")
+    print("=" * 60 + "\n")
 
     # Send asynchronously using background thread
     from_email = getattr(
